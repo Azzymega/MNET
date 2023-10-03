@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <fstream>
 #define IMAGE_ENTRIES 16
 #define IMAGE_NAME 8
 // M$ STYLE
@@ -11,3 +12,13 @@ using BYTE = uint8_t;
 using DWORDLONG = uint64_t;
 using CHAR = char;
 using STRING = std::string;
+
+template <class T> class ILoadInteraction
+{
+    virtual void Interact(T* Object) = 0;
+};
+
+template <class T,class J> class ILoadConflict
+{
+    virtual T Resolve(J Object) = 0;
+};

@@ -4,7 +4,7 @@
 
 struct DOSHeader {
   WORD magic; // 0x4D5A
-  WORD garbage[30];
+  WORD garbage[29];
   WORD peStart;
 };
 
@@ -13,7 +13,7 @@ struct ImageDataDirectory {
   DWORD Size;
 };
 
-struct ImageOptionalHeader {
+struct PEOptionalHeader {
   WORD Magic;              // FIXED 0x10B
   BYTE MajorLinkerVersion; // FIXED 6
   BYTE MinorLinkerVersion; // FIXED 0
@@ -21,11 +21,11 @@ struct ImageOptionalHeader {
   DWORD SizeOfInitializedData;
   DWORD SizeOfUninitializedData;
   DWORD AddressOfEntryPoint;
-  DWORD BaseOfCode; // FIXED 0x00400000 FOR EXE AND 0x10000000 FOR DLL
+  DWORD BaseOfCode; // FIXED 0x0040 FOR EXE AND 0x20 FOR DLL
   DWORD BaseOfData;
-  DWORD ImageBase;                  // FIXED 0x400000
-  DWORD SectionAlignment;           // FIXED 0x2000
-  DWORD FileAlignment;              // FIXED 0x200 or 0x1000
+  DWORD ImageBase;                  // FIXED 0x40
+  DWORD SectionAlignment;           // FIXED 0x20
+  DWORD FileAlignment;              // FIXED 0x2 or 0x1
   WORD MajorOperatingSystemVersion; // FIXED 4
   WORD MinorOperatingSystemVersion; // FIXED 0
   WORD MajorImageVersion;           // FIXED 0
@@ -38,13 +38,13 @@ struct ImageOptionalHeader {
   DWORD CheckSum;                 // FIXED 0
   WORD Subsystem;                 // FIXED 0x3 OR 0x2
   WORD DllCharacteristics;        // FIXED 0
-  DWORD SizeOfStackReserve;       // FIXED 0x100000
-  DWORD SizeOfStackCommit;        // FIXED 0x1000
-  DWORD SizeOfHeapReserve;        // FIXED 0x100000
-  DWORD SizeOfHeapCommit;         // FIXED 0x1000
+  DWORD SizeOfStackReserve;       // FIXED 0x10
+  DWORD SizeOfStackCommit;        // FIXED 0x10
+  DWORD SizeOfHeapReserve;        // FIXED 0x10
+  DWORD SizeOfHeapCommit;         // FIXED 0x10
   DWORD LoaderFlags;              // FIXED 0
   DWORD NumberOfRvaAndSizes;      // FIXED 0x10
-  ImageDataDirectory ExportTable; // FIXED 0
+  ImageDataDirectory ExportTable; // FIXED 0 // ТУТ ВОЗМОЖНО БАГ!!!
   ImageDataDirectory ImportTable;
   ImageDataDirectory ResourceTable;       // FIXED 0
   ImageDataDirectory ExceptionTable;      // FIXED 0
@@ -77,10 +77,6 @@ struct StreamHeader {
   DWORD Offset;
   DWORD Size;
   STRING Name;
-};
-
-struct SharpStream {
-  
 };
 
 struct MetadataRoot {
@@ -140,7 +136,7 @@ struct ImportAddressTable {
   BYTE ZEROS[20];
 };
 
-struct ImageFileHeader {
+struct PEHeader {
   WORD Architecture; // FIXED 0x14C
   WORD NumberOfSections;
   DWORD TimeDateStamp;
@@ -150,10 +146,17 @@ struct ImageFileHeader {
   FileHeaders Characteristics; // DLL FLAG 0x2000 OR EXE FLAG 0
 };
 
-struct ImageNTHeader {
+struct PEBase {
   DWORD Signature; // 0x5045
-  ImageFileHeader FileHeader;
-  ImageOptionalHeader OptionalHeader;
+  PEHeader FileHeader;
+  PEOptionalHeader OptionalHeader;
 };
 
-struct PEHeader {};
+struct Loader;
+
+struct Assembly : public ILoadInteraction<Loader> {
+  std::string AssemblyLocation;
+  DOSHeader Header;
+  PEBase Base;
+  void Interact(Loader *Object) override;
+};
