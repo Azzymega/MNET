@@ -32,7 +32,12 @@ struct Loader : public ILoadConflict<Loader *, Assembly *>,
                 ILoadConflict<Loader *, PEBase *>,
                 ILoadConflict<Loader *, PEHeader *>,
                 ILoadConflict<Loader *, PEOptionalHeader *>,
-                ILoadConflict<Loader *, ImageDataDirectory *> {
+                ILoadConflict<Loader *, ImageDataDirectory *>,
+                ILoadConflict<Loader *, ImageSectionHeader *>,
+                ILoadConflict<Loader *, PESectionsHeaders *>,
+                ILoadConflict<Loader *, CLIHeader *>,
+                ILoadConflict<Loader *, CLIMetadata *>,
+                ILoadConflict<Loader *, ImportAddressTable *> {
   BytecodeBuffer Buffer;
   AssemblyBuffer ABuffer;
   AssemblyStream Stream;
@@ -48,4 +53,9 @@ private:
   Loader *Resolve(PEHeader *Object) override;
   Loader *Resolve(PEOptionalHeader *Object) override;
   Loader *Resolve(ImageDataDirectory *Object) override;
+  Loader *Resolve(PESectionsHeaders *Object) override;
+  Loader *Resolve(ImageSectionHeader *Object) override;
+  Loader *Resolve(CLIHeader *Object) override;
+  Loader *Resolve(CLIMetadata *Object) override;
+  Loader * Resolve(ImportAddressTable *Object) override;
 };

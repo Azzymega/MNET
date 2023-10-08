@@ -13,6 +13,8 @@ struct ImageDataDirectory {
   DWORD Size;
 };
 
+using RVA = ImageDataDirectory;
+
 struct PEOptionalHeader {
   WORD Magic;              // FIXED 0x10B
   BYTE MajorLinkerVersion; // FIXED 6
@@ -92,11 +94,8 @@ struct MetadataRoot {
 };
 
 struct ImageSectionHeader {
-  BYTE Name[IMAGE_NAME];
-  union {
-    DWORD PhysicalAddress;
-    DWORD VirtualSize;
-  };
+  CHAR Name[IMAGE_NAME];
+  DWORD VirtualSize;
   DWORD VirtualAddress;
   DWORD SizeOfRawData;
   DWORD PointerToRawData;
@@ -117,17 +116,23 @@ struct CLIHeader {
   DWORD HeaderSize;
   WORD MajorRuntimeVersion;
   WORD MinorRuntimeVersion;
-  DWORDLONG MetaData;
+  RVA MetaData;
   DWORD Flags;
-  DWORDLONG Resources;
-  DWORDLONG StrongNameSignature;
-  DWORDLONG CodeManagerTable; // FIXED 0
+  DWORD EntryPointToken;
+  RVA Resources;
+  RVA StrongNameSignature;
+  RVA CodeManagerTable; // FIXED 0
   VTable VTableFixups;
-  DWORDLONG ExportAddressTableJumps; // FIXED 0
-  DWORDLONG MangedNativeHeader;      // FIXED 0
+  RVA ExportAddressTableJumps; // FIXED 0
+  RVA MangedNativeHeader;      // FIXED 0
 };
 
 struct ImportAddressTable {
+  DWORD RVA;
+  DWORD ImportEnd;
+};
+
+struct ImportDirectoryTable {
   DWORD ImportLookupTable;
   DWORD DateTimeStamp;  // FIXED 0
   DWORD ForwarderChain; // FIXED 0
@@ -146,10 +151,20 @@ struct PEHeader {
   FileHeaders Characteristics; // DLL FLAG 0x2000 OR EXE FLAG 0
 };
 
+struct PESectionsHeaders {
+  std::vector<ImageSectionHeader> SectionsHeaders;
+};
+
 struct PEBase {
   DWORD Signature; // 0x5045
   PEHeader FileHeader;
   PEOptionalHeader OptionalHeader;
+  PESectionsHeaders SectionsHeaders;
+};
+
+struct CLIMetadata{
+  ImportAddressTable ITAAble;
+  CLIHeader Header;
 };
 
 struct Loader;
@@ -158,5 +173,6 @@ struct Assembly : public ILoadInteraction<Loader> {
   std::string AssemblyLocation;
   DOSHeader Header;
   PEBase Base;
+  CLIMetadata ManagedMetadata;
   void Interact(Loader *Object) override;
 };

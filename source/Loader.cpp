@@ -6,6 +6,8 @@ Loader *Loader::Resolve(Assembly *Object) {
   Interact(&this->Buffer);
   Resolve(&Object->Header);
   Resolve(&Object->Base);
+  this->Buffer.BufferCounter+=16; // WTF, зачем там эти 16 байт? 
+  Resolve(&Object->ManagedMetadata);
   return nullptr;
 }
 
@@ -31,6 +33,7 @@ Loader *Loader::Resolve(PEBase *Object) {
   Object->Signature = this->Buffer.Resolve(DWORD());
   Resolve(&Object->FileHeader);
   Resolve(&Object->OptionalHeader);
+  Resolve(&Object->SectionsHeaders);
   return nullptr;
 }
 
@@ -98,6 +101,62 @@ Loader *Loader::Resolve(PEOptionalHeader *Object) { // пофиксить баг
 Loader *Loader::Resolve(ImageDataDirectory *Object) {
   Object->VirtualAddress = this->Buffer.Resolve(DWORD());
   Object->Size = this->Buffer.Resolve(DWORD());
+  return nullptr;
+}
+
+Loader *Loader::Resolve(PESectionsHeaders *Object) {
+  Object->SectionsHeaders = std::vector<ImageSectionHeader>(
+      this->ABuffer.Assembly->Base.FileHeader.NumberOfSections);
+  for (auto &&Section : Object->SectionsHeaders) {
+    Resolve(&Section);
+  }
+  return nullptr;
+}
+
+Loader *Loader::Resolve(ImageSectionHeader *Object) {
+  for (auto &&Letter : Object->Name) {
+    Letter = this->Buffer.Resolve(BYTE());
+  }
+  Object->VirtualSize = this->Buffer.Resolve(DWORD());
+  Object->VirtualAddress = this->Buffer.Resolve(DWORD());
+  Object->SizeOfRawData = this->Buffer.Resolve(DWORD());
+  Object->PointerToRawData = this->Buffer.Resolve(DWORD());
+  Object->PointerToRelocations = this->Buffer.Resolve(DWORD());
+  Object->PointerToLinenumbers = this->Buffer.Resolve(DWORD());
+  Object->NumberOfRelocations = this->Buffer.Resolve(WORD());
+  Object->NumberOfLinenumbers = this->Buffer.Resolve(WORD());
+  Object->SectionCharacteristics =
+      (Characteristics)this->Buffer.Resolve(DWORD());
+  return nullptr;
+}
+
+Loader *Loader::Resolve(CLIHeader *Object) {
+  Object->HeaderSize = this->Buffer.Resolve(DWORD());
+  Object->MajorRuntimeVersion = this->Buffer.Resolve(WORD());
+  Object->MinorRuntimeVersion = this->Buffer.Resolve(WORD());
+  Resolve(&Object->MetaData);
+  Object->Flags = this->Buffer.Resolve(DWORD());
+  Object->EntryPointToken = this->Buffer.Resolve(DWORD());
+  Resolve(&Object->Resources);
+  Resolve(&Object->StrongNameSignature);
+  Resolve(&Object->CodeManagerTable);
+  Object->VTableFixups.VirtualAddress = this->Buffer.Resolve(DWORD());
+  Object->VTableFixups.Size = this->Buffer.Resolve(WORD());
+  Object->VTableFixups.Type = this->Buffer.Resolve(WORD());
+  Resolve(&Object->ExportAddressTableJumps);
+  Resolve(&Object->MangedNativeHeader);
+  return nullptr;
+}
+
+Loader *Loader::Resolve(CLIMetadata *Object) {
+  Resolve(&Object->ITAAble);
+  Resolve(&Object->Header);
+  return nullptr;
+};
+
+Loader * Loader::Resolve(ImportAddressTable *Object) {
+  Object->RVA = this->Buffer.Resolve(DWORD());
+  Object->ImportEnd = this->Buffer.Resolve(DWORD());
   return nullptr;
 }
 
