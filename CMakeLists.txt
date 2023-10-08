@@ -8,3 +8,4 @@ file(GLOB mainLib
 add_library(mainNet SHARED ${mainLib})
 add_executable(mainTest test/mainTest.cpp)
 target_link_libraries(mainTest PRIVATE mainNet)
+add_subdirectory(source/gc)
