@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(mgc)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-file(GLOB gcSource
+file(GLOB_RECURSE gcSource
      "*.hpp"
      "*.cpp"
 )
