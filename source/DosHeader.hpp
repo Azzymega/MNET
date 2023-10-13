@@ -1,6 +1,7 @@
 #pragma once
 #include "Defines.hpp"
 #include <vector>
+#include "MetadataTables.hpp"
 
 struct DOSHeader {
   WORD magic; // 0x4D5A
@@ -82,7 +83,9 @@ struct StreamHeader {
 };
 
 struct MetadataRoot {
-  DWORD Signature;
+  WORD Offset; // FOR ME
+
+  DWORD Signature; // BSJB
   WORD MajorVersion;
   WORD MinorVersion;
   DWORD Reserved;
@@ -162,7 +165,7 @@ struct PEBase {
   PESectionsHeaders SectionsHeaders;
 };
 
-struct CLIMetadata{
+struct CLIMetadata {
   ImportAddressTable ITAAble;
   CLIHeader Header;
 };
@@ -174,5 +177,7 @@ struct Assembly : public ILoadInteraction<Loader> {
   DOSHeader Header;
   PEBase Base;
   CLIMetadata ManagedMetadata;
+  MetadataRoot MetadataEntryPoint;
+  TildaStream MainStream;
   void Interact(Loader *Object) override;
 };

@@ -64,7 +64,7 @@ struct MemoryChunk {
 struct Pointer {
   Object *Value;
   u4 ReferencesCount;
-  Pointer();
+  Pointer(Object* Value);
   ~Pointer();
 };
 

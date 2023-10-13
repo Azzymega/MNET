@@ -14,7 +14,10 @@ MemoryChunk::MemoryChunk() {
 }
 MemoryChunk::~MemoryChunk() { free(data); }
 
-Pointer::Pointer() { this->ReferencesCount = 1; }
+Pointer::Pointer(Object *Value) {
+  this->Value = Value;
+  this->ReferencesCount = 1;
+}
 
 Pointer::~Pointer() { delete this->Value; }
 
@@ -26,17 +29,17 @@ TypeSystemController *TypeSystemController::Resolve(TypeDefinition *Object) {
 HeapController::HeapController() { this->chunks.push_back(MemoryChunk()); }
 
 HeapController *HeapController::Resolve(TypeDefinition *Object) {
-  struct Object value{};
+  struct Object value {};
   value.type = Object;
-  value.value = (char*)&chunks.back().data + chunks.back().AllocatedSize;
-  chunks.back().AllocatedSize+=(Object->mainData.size);
+  value.value = (char *)&chunks.back().data + chunks.back().AllocatedSize;
+  chunks.back().AllocatedSize += (Object->mainData.size);
   return nullptr;
 }
 
 HeapController *HeapController::Resolve(Object *Object) {
-  return nullptr; // дописать
+  Pointer pt = Pointer(Object);
+  Pointers.push_back(pt);
+  return nullptr;
 }
 
-void Object::Interact(HeapController *Object) {
-  Object->Resolve(this);
-}
+void Object::Interact(HeapController *Object) { Object->Resolve(this); }

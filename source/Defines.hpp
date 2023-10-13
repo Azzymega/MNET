@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-
+#include <iostream>
 #define IMAGE_ENTRIES 16
 #define IMAGE_NAME 8
 

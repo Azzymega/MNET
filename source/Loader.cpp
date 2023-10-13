@@ -1,4 +1,6 @@
 #include "Loader.hpp"
+#include <corecrt.h>
+#include <vector>
 
 Loader *Loader::Resolve(Assembly *Object) {
   this->ABuffer.Assembly = Object;
@@ -6,8 +8,9 @@ Loader *Loader::Resolve(Assembly *Object) {
   Interact(&this->Buffer);
   Resolve(&Object->Header);
   Resolve(&Object->Base);
-  this->Buffer.BufferCounter+=16; // WTF, зачем там эти 16 байт? 
+  this->Buffer.BufferCounter += 16; // WTF, зачем там эти 16 байт?
   Resolve(&Object->ManagedMetadata);
+  Resolve(&Object->MetadataEntryPoint);
   return nullptr;
 }
 
@@ -48,7 +51,7 @@ Loader *Loader::Resolve(PEHeader *Object) {
   return nullptr;
 }
 
-Loader *Loader::Resolve(PEOptionalHeader *Object) { // пофиксить баг
+Loader *Loader::Resolve(PEOptionalHeader *Object) {
   Object->Magic = this->Buffer.Resolve(WORD());
   Object->MajorLinkerVersion = this->Buffer.Resolve(BYTE());
   Object->MinorLinkerVersion = this->Buffer.Resolve(BYTE());
@@ -154,16 +157,62 @@ Loader *Loader::Resolve(CLIMetadata *Object) {
   return nullptr;
 };
 
-Loader * Loader::Resolve(ImportAddressTable *Object) {
+Loader *Loader::Resolve(ImportAddressTable *Object) {
   Object->RVA = this->Buffer.Resolve(DWORD());
   Object->ImportEnd = this->Buffer.Resolve(DWORD());
+  return nullptr;
+}
+
+Loader *Loader::Resolve(MetadataRoot *Object) {
+  this->Buffer.BufferCounter -= sizeof(CLIHeader) + sizeof(RVA);
+  this->Buffer.BufferCounter +=
+      this->ABuffer.Assembly->ManagedMetadata.Header.MetaData.VirtualAddress -=
+      this->ABuffer.Assembly->Base.SectionsHeaders.SectionsHeaders[0]
+          .VirtualAddress;
+  Object->Offset = this->Buffer.BufferCounter;
+  Object->Signature = this->Buffer.Resolve(DWORD());
+  Object->MajorVersion = this->Buffer.Resolve(WORD());
+  Object->MinorVersion = this->Buffer.Resolve(WORD());
+  Object->Reserved = this->Buffer.Resolve(DWORD());
+  Object->VersionLength = this->Buffer.Resolve(DWORD());
+  for (size_t stringLength = 0; stringLength < Object->VersionLength;
+       stringLength++) {
+    Object->VERSION.push_back(this->Buffer.Resolve(BYTE()));
+  }
+  Object->Flags = this->Buffer.Resolve(WORD());
+  Object->Streams = this->Buffer.Resolve(WORD());
+  Object->StreamHeaders = std::vector<StreamHeader>(Object->Streams);
+  for (auto &&stream : Object->StreamHeaders) {
+    Resolve(&stream);
+  }
+  return nullptr;
+}
+
+Loader *Loader::Resolve(StreamHeader *Object) {
+  Object->Offset = this->Buffer.Resolve(DWORD());
+  Object->Size = this->Buffer.Resolve(DWORD());
+  while (true) {
+    char c;
+    c = this->Buffer.Resolve(BYTE());
+    Object->Name.push_back(c);
+    if (c == 0) {
+      while (Object->Name.length() % 4 != 0) {
+        Object->Name.push_back(this->Buffer.Resolve(BYTE()));
+      }
+      break;
+    }
+  }
+  return nullptr;
+}
+
+Loader *Loader::Resolve(TildaStream *Object) {
   return nullptr;
 }
 
 AssemblyStream *AssemblyStream::Resolve(Assembly *Object) {
   this->LoaderStream.open(Object->AssemblyLocation, std::ios::binary);
   if (!LoaderStream.is_open()) {
-    throw "FAIL";
+    std::cout << "Fail";
   }
   return nullptr;
 }
