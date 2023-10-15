@@ -7,13 +7,15 @@ struct AssemblyStream;
 struct BytecodeBuffer : ILoadConflict<BytecodeBuffer *, AssemblyStream *>,
                         ILoadConflict<BYTE, BYTE>,
                         ILoadConflict<WORD, WORD>,
-                        ILoadConflict<DWORD, DWORD> {
+                        ILoadConflict<DWORD, DWORD>,
+                        ILoadConflict<QWORD, QWORD> {
   std::vector<BYTE> Buffer;
   DWORD BufferCounter;
   BytecodeBuffer *Resolve(AssemblyStream *Object) override;
   unsigned char Resolve(unsigned char Object) override;
   unsigned int Resolve(unsigned int Object) override;
   unsigned short Resolve(unsigned short Object) override;
+  unsigned long long Resolve(unsigned long long Object) override;
 };
 
 struct AssemblyBuffer {
@@ -40,7 +42,9 @@ struct Loader : public ILoadConflict<Loader *, Assembly *>,
                 ILoadConflict<Loader *, ImportAddressTable *>,
                 ILoadConflict<Loader *, MetadataRoot *>,
                 ILoadConflict<Loader *, StreamHeader *>,
-                ILoadConflict<Loader *, TildaStream *> {
+                ILoadConflict<Loader *, TildaStream *>,
+                ILoadConflict<Loader *, ValidTables *>,
+                ILoadConflict<Loader *, MetadataTable *> {
   BytecodeBuffer Buffer;
   AssemblyBuffer ABuffer;
   AssemblyStream Stream;
@@ -64,4 +68,6 @@ private:
   Loader *Resolve(MetadataRoot *Object) override;
   Loader *Resolve(StreamHeader *Object) override;
   Loader *Resolve(TildaStream *Object) override;
+  Loader *Resolve(ValidTables *Object) override;
+  Loader *Resolve(MetadataTable *Object) override;
 };

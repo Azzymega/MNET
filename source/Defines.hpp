@@ -11,7 +11,7 @@
 using WORD = uint16_t;
 using DWORD = uint32_t;
 using BYTE = uint8_t;
-using DWORDLONG = uint64_t;
+using QWORD = uint64_t;
 using CHAR = char;
 using STRING = std::string;
 
